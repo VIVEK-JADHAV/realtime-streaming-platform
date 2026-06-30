@@ -6,6 +6,8 @@ Event-driven data ingestion platform for ShopStream e-commerce. Captures clickst
 
 ```mermaid
 graph TD
+    EB[EventBridge Rule<br/>rate: 1 minute] -->|invokes| Lambda
+
     subgraph VPC ["VPC 10.0.0.0/16"]
         subgraph Public ["Public Subnets (10.0.0.0/24, 10.0.1.0/24)"]
             IGW[Internet Gateway]
@@ -39,6 +41,30 @@ graph TD
 ```
 
 ## How It Works
+
+### Scheduled Trigger (EventBridge)
+
+The producer runs automatically on a 1-minute schedule via EventBridge:
+
+```
+EventBridge Rule (rate: 1 minute)
+    │
+    ├── Fires every 60 seconds (clock-based, not event-driven)
+    ├── Target: Lambda function ARN
+    ├── Permission: aws_lambda_permission allows events.amazonaws.com to invoke
+    │
+    ▼
+Lambda invoked (identical to manual `aws lambda invoke`)
+```
+
+**Operational control:**
+```bash
+# Pause producing (keeps rule, stops invocations)
+aws events disable-rule --name shopstream-dev-producer-schedule --region us-east-1
+
+# Resume
+aws events enable-rule --name shopstream-dev-producer-schedule --region us-east-1
+```
 
 ### Event Flow
 
@@ -291,6 +317,7 @@ realtime-streaming-platform/
 │   │                        #   - Glue Schema Registry + ClickstreamEvent schema
 │   │                        #   - IAM roles + policies (MSK, Glue, CloudWatch, S3)
 │   │                        #   - Lambda function + layer
+│   │                        #   - EventBridge rule (1-minute schedule) + Lambda permission
 │   │                        #   - S3 DLQ bucket + lifecycle
 │   │                        #   - CloudWatch log group, metric filters
 │   │                        #   - SNS topic, alarms, dashboard
@@ -331,7 +358,7 @@ terraform apply -var="alert_email=you@example.com"
 
 # 3. Confirm SNS subscription (check email, click "Confirm subscription")
 
-# 4. Test single invocation
+# 4. Test single invocation (EventBridge will also auto-invoke every minute)
 aws lambda invoke --function-name shopstream-dev-clickstream-producer \
     --region us-east-1 /tmp/out.json && cat /tmp/out.json
 
@@ -345,6 +372,9 @@ cd ..
 
 # 6. View dashboard
 terraform output dashboard_url
+
+# 7. Pause scheduled production (optional — save costs when not testing)
+aws events disable-rule --name shopstream-dev-producer-schedule --region us-east-1
 ```
 
 ### Teardown (save costs)
@@ -389,6 +419,7 @@ NAT Gateway costs ~$1.15/day. Destroy when not actively developing.
 | Lambda | $0.01 | $0.30 | 256MB × 10s × few invocations/day |
 | S3 | <$0.01 | <$0.01 | DLQ only, negligible storage |
 | CloudWatch | <$0.01 | ~$1 | Custom metrics + dashboard |
+| EventBridge | Free | Free | Scheduled rules have no per-invocation charge |
 | Glue Schema Registry | Free | Free | No per-schema cost |
 | **Total (active)** | **~$1.30** | **~$40** | Dominated by NAT Gateway |
 | **Total (destroyed)** | **$0** | **$0** | All serverless/on-demand |

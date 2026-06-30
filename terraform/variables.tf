@@ -24,5 +24,5 @@ variable "project_name" {
 variable "alert_email" {
   description = "Email address for monitoring alerts"
   type        = string
-  default     = ""
+  default     = "rehajo9720@noproposal.com"
 }

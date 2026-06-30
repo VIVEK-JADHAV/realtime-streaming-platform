@@ -474,6 +474,33 @@ resource "aws_lambda_layer_version" "kafka_deps" {
 }
 
 # -----------------------------------------------------
+# EVENTBRIDGE — SCHEDULED PRODUCER TRIGGER
+# -----------------------------------------------------
+
+resource "aws_cloudwatch_event_rule" "producer_schedule" {
+  name                = "${var.project_name}-${var.environment}-producer-schedule"
+  description         = "Invoke clickstream producer every minute"
+  schedule_expression = "rate(1 minute)"
+
+  tags = {
+    Name = "${var.project_name}-${var.environment}-producer-schedule"
+  }
+}
+
+resource "aws_cloudwatch_event_target" "producer_lambda" {
+  rule = aws_cloudwatch_event_rule.producer_schedule.name
+  arn  = aws_lambda_function.producer.arn
+}
+
+resource "aws_lambda_permission" "eventbridge" {
+  statement_id  = "AllowEventBridgeInvoke"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.producer.function_name
+  principal     = "events.amazonaws.com"
+  source_arn    = aws_cloudwatch_event_rule.producer_schedule.arn
+}
+
+# -----------------------------------------------------
 # MONITORING — SNS + ALARMS + DASHBOARD
 # -----------------------------------------------------
 
