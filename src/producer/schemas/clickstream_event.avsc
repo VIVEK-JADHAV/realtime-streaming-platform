@@ -1,0 +1,70 @@
+{
+  "type": "record",
+  "name": "ClickstreamEvent",
+  "namespace": "com.shopstream.events",
+  "doc": "A user interaction event from the ShopStream e-commerce platform",
+  "fields": [
+    {
+      "name": "event_id",
+      "type": "string",
+      "doc": "Unique identifier for this event (UUID)"
+    },
+    {
+      "name": "session_id",
+      "type": "string",
+      "doc": "Browser session identifier — used as Kafka partition key"
+    },
+    {
+      "name": "user_id",
+      "type": ["null", "string"],
+      "default": null,
+      "doc": "Logged-in user ID. Null for anonymous visitors (~15% of traffic)"
+    },
+    {
+      "name": "event_type",
+      "type": {
+        "type": "enum",
+        "name": "EventType",
+        "symbols": ["PAGE_VIEW", "SEARCH", "ADD_TO_CART", "PURCHASE"]
+      },
+      "doc": "Type of user interaction"
+    },
+    {
+      "name": "product_id",
+      "type": ["null", "string"],
+      "default": null,
+      "doc": "Product involved in this event. Null for search events"
+    },
+    {
+      "name": "category",
+      "type": "string",
+      "doc": "Product category"
+    },
+    {
+      "name": "timestamp",
+      "type": "long",
+      "doc": "Event time in epoch milliseconds (UTC)"
+    },
+    {
+      "name": "page_url",
+      "type": "string",
+      "doc": "URL of the page where the event occurred"
+    },
+    {
+      "name": "referrer",
+      "type": "string",
+      "doc": "How the user arrived at this page"
+    },
+    {
+      "name": "device_type",
+      "type": "string",
+      "doc": "User device: desktop, mobile, or tablet"
+    },
+    {
+      "name": "properties",
+      "type": {"type": "map", "values": "string"},
+      "default": {},
+      "doc": "Flexible key-value pairs for additional event data"
+    }
+  ]
+}

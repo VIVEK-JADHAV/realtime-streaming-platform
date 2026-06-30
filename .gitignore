@@ -1,0 +1,21 @@
+# Credentials
+.env
+
+# Learning resources (personal notes)
+SPRINT_VIDEOS.md
+
+# Terraform
+terraform/.terraform/
+terraform/.build/
+terraform/*.tfstate
+terraform/*.tfstate.backup
+terraform/.terraform.lock.hcl
+
+# Lambda build artifacts
+layers/kafka-deps.zip
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+virenv/
